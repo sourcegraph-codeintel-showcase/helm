@@ -1,6 +1,69 @@
 ---
 version: 2
 
+orbs:
+  lsif-go:
+    jobs:
+      build-index:
+        description: Build an LSIF index of the go source.
+        parameters:
+          index-dest:
+            type: string
+            description: Where to dump the LSIF index.
+            default: dump.lsif
+          project-root:
+            type: string
+            description: Root of go source.
+            default: .
+        docker:
+          - image: sourcegraph/lsif-go:latest
+        steps:
+          - checkout
+          - run: |
+              SRC_INDEX_DEST=/tmp/<<parameters.index-dest>> \
+              SRC_PROJECT_ROOT=<<parameters.project-root>> \
+              /lsif-go.sh
+          - persist_to_workspace:
+              root: /tmp/
+              paths:
+                - << parameters.index-dest >>
+
+
+  lsif-upload:
+    jobs:
+      upload-index:
+        description: Upload an LSIF dump to a sourcegraph instance
+        parameters:
+          file:
+            type: string
+            description: The LSIF dump file to upload.
+            default: dump.lsif
+          root:
+            type: string
+            description: The root of the LSIF dump.
+            default: .
+          endpoint:
+            type: string
+            description: The Sourcegraph instance to target.
+            default: https://sourcegraph.com
+          github-token:
+            type: string
+            description: GitHub personal access token with public_repo scope or GitHub installation access token. Necessary only when uploading to a Sourcegraph instance with lsifEnforceAuth (e.g. sourcegraph.com).
+            default: ''
+        docker:
+          - image: sourcegraph/lsif-upload:latest
+        steps:
+          - attach_workspace:
+              at: /tmp/src
+          - run: |
+              SRC_INDEX=/tmp/src/<< parameters.file >> \
+              SRC_GITHUB_REPOSITORY=${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} \
+              SRC_COMMIT_SHA=${CIRCLE_SHA1} \
+              SRC_PROJECT_ROOT=<< parameters.root >> \
+              SRC_GITHUB_TOKEN=<< parameters.github-token >> \
+              SRC_ENDPOINT=<< parameters.endpoint >> \
+              /upload.sh
+
 jobs:
   build:
     working_directory: ~/helm.sh/helm
@@ -34,3 +97,17 @@ workflows:
           filters:
             tags:
               only: /.*/
+
+  sourcegraph-index:
+    jobs:
+      - manual-approval:
+          type: approval
+      - lsif-go/build-index:
+          requires:
+            - manual-approval
+      - lsif-upload/upload-index:
+          github-token: ${SRC_GITHUB_ACCESS_TOKEN}
+          context: SRC_GITHUB_ACCESS_TOKEN
+          requires:
+            - manual-approval
+            - lsif-node/build-index
