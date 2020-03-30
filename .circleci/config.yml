@@ -1,5 +1,5 @@
 ---
-version: 2
+version: 2.1
 
 orbs:
   lsif-go:
@@ -27,7 +27,6 @@ orbs:
               root: /tmp/
               paths:
                 - << parameters.index-dest >>
-
 
   lsif-upload:
     jobs:
@@ -90,7 +89,7 @@ jobs:
           command: .circleci/deploy.sh
 
 workflows:
-  version: 2
+  version: 2.1
   build:
     jobs:
       - build:
@@ -110,4 +109,4 @@ workflows:
           context: SRC_GITHUB_ACCESS_TOKEN
           requires:
             - manual-approval
-            - lsif-node/build-index
+            - lsif-go/build-index
