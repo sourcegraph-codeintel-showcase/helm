@@ -103,4 +103,5 @@ workflows:
       - lsif-upload/upload-index:
           github-token: ${SRC_GITHUB_ACCESS_TOKEN}
           context: SRC_GITHUB_ACCESS_TOKEN
+          requires:
             - lsif-go/build-index
