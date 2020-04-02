@@ -31,17 +31,17 @@ orbs:
   lsif-upload:
     jobs:
       upload-index:
-        description: Upload an LSIF dump to a sourcegraph instance
+        description: Upload an LSIF index to a sourcegraph instance
         parameters:
-          file:
+          index-file:
             type: string
-            description: The LSIF dump file to upload.
+            description: The LSIF index file to upload.
             default: dump.lsif
-          root:
+          project-root:
             type: string
-            description: The root of the LSIF dump.
+            description: The root of the project being indexed.
             default: .
-          endpoint:
+          src-endpoint:
             type: string
             description: The Sourcegraph instance to target.
             default: https://sourcegraph.com
@@ -55,13 +55,12 @@ orbs:
           - attach_workspace:
               at: /tmp/src
           - run: |
-              SRC_INDEX=/tmp/src/<< parameters.file >> \
-              SRC_GITHUB_REPOSITORY=${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} \
-              SRC_COMMIT_SHA=${CIRCLE_SHA1} \
-              SRC_PROJECT_ROOT=<< parameters.root >> \
-              SRC_GITHUB_TOKEN=<< parameters.github-token >> \
-              SRC_ENDPOINT=<< parameters.endpoint >> \
-              /upload.sh
+              src -endpoint='<<parameters.src-endpoint>>' lsif upload \
+                -file='<<parameters.index-file>>' \
+                -repo="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" \
+                -commit=${CIRCLE_SHA1} \
+                -root='<<parameters.project-root>>' \
+                $( [ -z '<<parameters.github-token>>' ] || echo "-github-token='<<parameters.github-token>>'" )
 
 jobs:
   build:
