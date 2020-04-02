@@ -54,13 +54,13 @@ orbs:
           - attach_workspace:
               at: /tmp/src
           - run: |
-              src -endpoint='<<parameters.src-endpoint>>' lsif upload \
-                -file='/tmp/src/<<parameters.index-file>>' \
+              src -endpoint="<<parameters.src-endpoint>>" lsif upload \
+                -file="/tmp/src/<<parameters.index-file>>" \
                 -repo="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" \
                 -commit=${CIRCLE_SHA1} \
-                -root='<<parameters.project-root>>' \
-                $( [ -z '<<parameters.github-token>>' ] || \
-                   echo "-github-token='<<parameters.github-token>>'" )
+                -root="<<parameters.project-root>>" \
+                $( [ -z "<<parameters.github-token>>" ] || \
+                   echo "-github-token=<<parameters.github-token>>" )
 
 jobs:
   build:
@@ -100,7 +100,6 @@ workflows:
     jobs:
       - lsif-go/build-index
       - lsif-upload/upload-index:
-          github-token: ${SRC_GITHUB_ACCESS_TOKEN}
-          context: SRC_GITHUB_ACCESS_TOKEN
+          github-token: ${SRC_GITHUB_TOKEN}
           requires:
             - lsif-go/build-index
