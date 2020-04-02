@@ -7,7 +7,7 @@ orbs:
       build-index:
         description: Build an LSIF index of the go source.
         parameters:
-          index-dest:
+          index:
             type: string
             description: Where to dump the LSIF index.
             default: dump.lsif
@@ -19,14 +19,13 @@ orbs:
           - image: sourcegraph/lsif-go:latest
         steps:
           - checkout
-          - run: mkdir -p /tmp/src
           - run:
               working-directory: <<parameters.project-root>>
-              command: lsif-go --out /tmp/src/<<parameters.index-dest>>
+              command: lsif-go --out /tmp/<<parameters.index>>
           - persist_to_workspace:
-              root: /tmp/src
+              root: /tmp
               paths:
-                - <<parameters.index-dest>>
+                - <<parameters.index>>
 
   lsif-upload:
     jobs:
@@ -56,7 +55,7 @@ orbs:
               at: /tmp/src
           - run: |
               src -endpoint='<<parameters.src-endpoint>>' lsif upload \
-                -file='<<parameters.index-file>>' \
+                -file='/tmp/src/<<parameters.index-file>>' \
                 -repo="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" \
                 -commit=${CIRCLE_SHA1} \
                 -root='<<parameters.project-root>>' \
