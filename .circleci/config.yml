@@ -2,65 +2,8 @@
 version: 2.1
 
 orbs:
-  lsif-go:
-    jobs:
-      build-index:
-        description: Build an LSIF index of the go source.
-        parameters:
-          index:
-            type: string
-            description: Where to dump the LSIF index.
-            default: dump.lsif
-          project-root:
-            type: string
-            description: Root of go source.
-            default: .
-        docker:
-          - image: sourcegraph/lsif-go:latest
-        steps:
-          - checkout
-          - run:
-              working-directory: <<parameters.project-root>>
-              command: lsif-go --out /tmp/<<parameters.index>>
-          - persist_to_workspace:
-              root: /tmp
-              paths:
-                - <<parameters.index>>
-
-  lsif-upload:
-    jobs:
-      upload-index:
-        description: Upload an LSIF index to a sourcegraph instance
-        parameters:
-          index-file:
-            type: string
-            description: The LSIF index file to upload.
-            default: dump.lsif
-          project-root:
-            type: string
-            description: The root of the project being indexed.
-            default: .
-          src-endpoint:
-            type: string
-            description: The Sourcegraph instance to target.
-            default: https://sourcegraph.com
-          github-token:
-            type: string
-            description: GitHub personal access token with public_repo scope or GitHub installation access token. Necessary only when uploading to a Sourcegraph instance with lsifEnforceAuth (e.g. sourcegraph.com).
-            default: ''
-        docker:
-          - image: sourcegraph/lsif-upload:latest
-        steps:
-          - attach_workspace:
-              at: /tmp/src
-          - run: |
-              src -endpoint="<<parameters.src-endpoint>>" lsif upload \
-                -file="/tmp/src/<<parameters.index-file>>" \
-                -repo="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" \
-                -commit=${CIRCLE_SHA1} \
-                -root="<<parameters.project-root>>" \
-                $( [ -z "<<parameters.github-token>>" ] || \
-                   echo "-github-token=<<parameters.github-token>>" )
+  lsif-go: sourcegraph/lsif-go@0.1.0
+  lsif-upload: sourcegraph/lsif-upload@0.1.0
 
 jobs:
   build:
